@@ -62,7 +62,7 @@ Shader "Homework/Parallax Occlusion Mapping"
                 LIGHTING_COORDS(3, 4)
             };
 
-            float3x3 BuildTangentToWorld(appdata v)
+            float3x3 BuildWorldToTangentMatrix(appdata v)
             {
                 float3 normalWorld = UnityObjectToWorldNormal(v.normal);
                 float3 tangentWorld = UnityObjectToWorldDir(v.tangent.xyz);
@@ -78,12 +78,12 @@ Shader "Homework/Parallax Occlusion Mapping"
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 
                 float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-                float3x3 tangentToWorld = BuildTangentToWorld(v);
+                float3x3 worldToTangent = BuildWorldToTangentMatrix(v);
                 float3 worldViewDir = UnityWorldSpaceViewDir(worldPos);
                 float3 worldLightDir = UnityWorldSpaceLightDir(worldPos);
 
-                o.viewDirTS = mul(tangentToWorld, worldViewDir);
-                o.lightDirTS = mul(tangentToWorld, worldLightDir);
+                o.viewDirTS = mul(worldToTangent, worldViewDir);
+                o.lightDirTS = mul(worldToTangent, worldLightDir);
                 TRANSFER_VERTEX_TO_FRAGMENT(o);
                 return o;
             }
@@ -95,7 +95,7 @@ Shader "Homework/Parallax Occlusion Mapping"
                 float layerCount = lerp(_MaxLayers, _MinLayers, ndotv);
                 float layerDepth = 1.0 / layerCount;
                 float currentLayerDepth = 0.0;
-                float2 parallaxVector = (viewDirTS.xy / max(viewDirTS.z, 0.12)) * _HeightScale;
+                float2 parallaxVector = (viewDirTS.xy / max(abs(viewDirTS.z), 0.12)) * _HeightScale;
                 float2 deltaUV = parallaxVector / layerCount;
 
                 float2 currentUV = uv;
